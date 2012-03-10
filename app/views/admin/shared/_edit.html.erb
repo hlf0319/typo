@@ -4,3 +4,15 @@
   <%= render :partial => "form" %>
 
 <% end %>
+
+<% if @article.id and current_user.admin? %>
+<%= form_tag(:action => "merge_article", :id => @article.id) do %>
+ <div class=''>
+   <h4><%= _("Merge Articles") %></h4>
+     <div class=''>
+     Article ID <%= text_field 'merge', 'other_article_id', {:autocomplete => 'off', :style => 'width: 30%'} %>
+     </div>
+     <input id='merge_article' type="submit" value="<%= _('Merge') %>" name="merge_article" />
+ </div>
+<% end %>
+<% end %>
