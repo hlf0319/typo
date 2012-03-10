@@ -48,7 +48,7 @@ describe Admin::ContentController do
       response.should render_template('index')
       response.should be_success
     end
-    
+
     it 'should restrict to withdrawn articles' do
       article = Factory(:article, :state => 'withdrawn', :published_at => '2010-01-01')
       get :index, :search => {:state => 'withdrawn'}
@@ -56,7 +56,7 @@ describe Admin::ContentController do
       response.should render_template('index')
       response.should be_success
     end
-  
+
     it 'should restrict to withdrawn articles' do
       article = Factory(:article, :state => 'withdrawn', :published_at => '2010-01-01')
       get :index, :search => {:state => 'withdrawn'}
@@ -607,6 +607,44 @@ describe Admin::ContentController do
       end
     end
 
+    describe 'merge action' do
+
+      describe 'when given valid article id' do
+
+        before (:each) do
+          @article2 = Factory(:article)
+        end
+
+        it 'should call the model method that performs the merge' do
+          Article.stub(:find).with(@article.id).and_return(@article)
+          @article.should_receive(:merge_with).with(@article2.id)
+          post :merge_article, {:id => @article.id, :merge => {:other_article_id => @article2.id}}
+          flash[:notice].should == 'Articles were successfully merged'
+        end
+
+        it 'should redirect to index' do
+          Article.stub(:find).with(@article.id).and_return(@article)
+          @article.stub(:merge_with).with(@article2.id)
+          post :merge_article, {:id => @article.id, :merge => {:other_article_id => @article2.id}}
+          response.should redirect_to(:action => 'index')
+        end
+
+      end
+
+      it 'should redirect to same page and display error when specified article does not exist' do
+        post :merge_article, {:id => @article.id, :merge => {:other_article_id => @article.id+1}}
+        flash[:notice].should == 'No such article id exists'
+        response.should redirect_to(:action => 'edit', :id => @article.id)
+      end
+
+      it 'should redirect to same page and display error when merging article with itself' do
+        post :merge_article, {:id => @article.id, :merge => {:other_article_id => @article.id}}
+        flash[:notice].should == 'Cannot merge article with itself'
+        response.should redirect_to(:action => 'edit', :id => @article.id)
+      end
+
+    end
+
   end
 
   describe 'with publisher connection' do
@@ -667,6 +705,23 @@ describe Admin::ContentController do
           get :destroy, :id => article.id
           response.should redirect_to(:action => 'index')
         end.should_not change(Article, :count)
+      end
+
+    end
+
+    describe 'merge action' do
+
+      it 'should not call the model method that performs the merge' do
+        article = mock('article')
+        Article.stub(:find).with(1).and_return(article)
+        article.should_not_receive(:merge_with).with(2)
+        post :merge_article, {:id => 1, :merge => {:other_article_id => 2}}
+      end
+
+      it 'should redirect to index and display error' do
+        post :merge_article, {:id => 1, :merge => {:other_article_id => 2}}
+        flash[:notice].should == 'You cannot merge articles because you are not an admin'
+        response.should redirect_to(:action => 'index')
       end
 
     end

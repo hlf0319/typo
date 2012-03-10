@@ -545,7 +545,7 @@ describe Article do
     describe "#find_by_permalink" do
       it "uses UTC to determine correct day" do
         @a.save
-        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 21, :permalink => 'a-big-article' 
+        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 21, :permalink => 'a-big-article'
         a.should == @a
       end
     end
@@ -566,7 +566,7 @@ describe Article do
     describe "#find_by_permalink" do
       it "uses UTC to determine correct day" do
         @a.save
-        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 22, :permalink => 'a-big-article' 
+        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 22, :permalink => 'a-big-article'
         a.should == @a
       end
     end
@@ -603,6 +603,40 @@ describe Article do
       end
     end
 
+  end
+
+  describe '#merge_with' do
+
+    before(:each) do
+      @merged_article = Factory(:article, :body => 'merged_body', :author => 'merged_author')
+      @merging_article = Factory(:article, :body => 'merging_body', :author => 'merging_author')
+    end
+
+    it 'should point all comments to the merged article' do
+      @merged_comment = Factory(:comment, :article => @merged_article)
+      @merging_comment = Factory(:comment, :article => @merging_article)
+      @merged_article.merge_with(@merging_article.id)
+      @merged_article.comments.should == [@merged_comment, @merging_comment]
+    end
+
+    describe 'when merging articles into one merged article' do
+
+      before(:each) do
+        @merged_article.merge_with(@merging_article.id)
+      end
+
+      it 'should merge the text of both previous articles' do
+        @merged_article.body.should == 'merged_bodymerging_body'
+      end
+
+      it 'should have one author (either one of the authors of the original articles)' do
+        @merged_article.author.should == ('merged_author' or 'merging_author')
+      end
+
+      it 'should delete the article being merged' do
+        Article.find_by_id(@merging_article.id).should == nil
+      end
+    end
   end
 end
 

@@ -114,15 +114,21 @@ class Admin::ContentController < Admin::BaseController
   end
 
   def merge_article
-   if current_user.admin?
-     Article.find(params[:id]).merge_with(params[:merge][:other_article_id])
-     flash[:notice] = _('Article was successfully merged')
-     redirect_to :action => 'index'
-   else
-     flash[:notice] = _('You can not merage articles because you are not adimn')
-     redirect_to :action => 'index'
-   end
- end
+    if !current_user.admin?
+      flash[:notice] = _('You cannot merge articles because you are not an admin')
+      redirect_to :action => 'index'
+    elsif Article.find_by_id(params[:merge][:other_article_id]).nil?
+      flash[:notice] = _('No such article id exists')
+      redirect_to :action => 'edit', :id => params[:id]
+    elsif Article.find_by_id(params[:merge][:other_article_id]) == Article.find(params[:id])
+      flash[:notice] = _('Cannot merge article with itself')
+      redirect_to :action => 'edit', :id => params[:id]
+    else
+      Article.find(params[:id]).merge_with(params[:merge][:other_article_id])
+      flash[:notice] = _('Articles were successfully merged')
+      redirect_to :action => 'index'
+    end
+  end
 
   protected
 
