@@ -48,7 +48,7 @@ class Article < Content
 
   before_create :set_defaults, :create_guid
   after_create :add_notifications
-  before_save :set_published_at
+  before_save :set_published_at, :ensure_settings_type
   after_save :post_trigger
   after_save :keywords_to_tags
 
@@ -419,7 +419,11 @@ class Article < Content
   def merge_with(other_article_id)
 
     merging_article = Article.find(other_article_id)
-    self.body = self.body + merging_article.body
+    if self.body == nil && merging_article.body != nil
+      self.body = merging_article.body
+    elsif self.body != nil && merging_article.body != nil
+      self.body = self.body + merging_article.body
+    end
 
     self.comments << merging_article.comments
     merging_article = Article.find(other_article_id)
@@ -434,6 +438,13 @@ class Article < Content
   def set_published_at
     if self.published and self[:published_at].nil?
       self[:published_at] = self.created_at || Time.now
+    end
+  end
+
+  def ensure_settings_type
+    if settings.is_a?(String)
+      # Any dump access forcing de-serialization
+      password.blank?
     end
   end
 
