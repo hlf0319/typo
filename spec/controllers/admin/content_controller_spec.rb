@@ -631,6 +631,12 @@ describe Admin::ContentController do
 
       end
 
+      it 'should redirect to index and display error when selected article does not exist' do
+        post :merge_article, {:id => @article.id+1, :merge => {:other_article_id => @article.id+1}}
+        flash[:notice].should == 'Cannot find article'
+        response.should redirect_to(:action => 'index')
+      end
+
       it 'should redirect to same page and display error when specified article does not exist' do
         post :merge_article, {:id => @article.id, :merge => {:other_article_id => @article.id+1}}
         flash[:notice].should == 'No such article id exists'

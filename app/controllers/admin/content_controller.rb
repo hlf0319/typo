@@ -117,7 +117,10 @@ class Admin::ContentController < Admin::BaseController
     if !current_user.admin?
       flash[:notice] = _('You cannot merge articles because you are not an admin')
       redirect_to :action => 'index'
-    elsif Article.find_by_id(params[:merge][:other_article_id]).nil?
+    elsif (Article.find_by_id(params[:id]).nil?)
+      flash[:notice] = _('Cannot find article')
+      redirect_to :action => 'index'
+    elsif (Article.find_by_id(params[:merge][:other_article_id]).nil?)
       flash[:notice] = _('No such article id exists')
       redirect_to :action => 'edit', :id => params[:id]
     elsif Article.find_by_id(params[:merge][:other_article_id]) == Article.find(params[:id])
